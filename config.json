@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "bitbucket ssh",
+      "command": "ssh -T git@bitbucket.org"
+    },
+    {
+      "name": "github ssh",
+      "command": "ssh -T git@github.com 2>&1 | grep -q \"successfully\""
+    },
+    {
+      "name": "gitlab ssh",
+      "command": "ssh -T git@gitlab.com"
+    }
+  ]
+}
