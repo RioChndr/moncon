@@ -1,7 +1,11 @@
+mod thread_pool;
+
 use env_logger::Env;
-use log::{error, info, debug};
+use log::{error, debug, info};
 use serde::{Serialize, Deserialize};
-use std::{process::{Command, self}, io::{Error, BufReader, ErrorKind}, fs::File};
+use std::{process::{Command, self}, io::{Error, BufReader, ErrorKind}, fs::File, sync::{Mutex, Arc}};
+
+use crate::thread_pool::ThreadPool;
 
 #[derive(Serialize, Deserialize)]
 struct Config {
@@ -17,13 +21,13 @@ struct ConfigCommand {
 fn run_command(config_command: &ConfigCommand) -> Result<String, Error>{
     let mut command = Command::new("sh");
 
-    debug!("Running {}", config_command.name);
+    debug!("-> 🔁 Running {}", config_command.name);
     let result_output = command.arg("-c").arg(&config_command.command).output().expect("Failed run command");
     if result_output.status.success() {
         return Ok(format!("Success {}", config_command.name));
     } else {
         debug!("{:?}", String::from_utf8(result_output.stderr).expect("Failed parse result_output"));
-        return Err(Error::new(ErrorKind::Interrupted, "failed run command"));
+        return Err(Error::new(ErrorKind::Interrupted, format!("failed run command {}", config_command.name)));
     }
 }
 
@@ -47,9 +51,6 @@ fn read_file_config(filename: &String) -> Result<Config, Error>{
             return Err(error_model);
         }
     }
-    
-    
-    
 }
 
 fn main() {
@@ -64,22 +65,33 @@ fn main() {
         }
     };
 
-    let mut count_success:u8 = 0;
-    let mut count_failed:u8 = 0;
-    
-    for config_command in config.commands {
-        match run_command(&config_command) {
-            Ok(res) => {
-                count_success = count_success + 1;
-                info!("{}", res);
+    let mut pool = ThreadPool::new(10);
+    let success_count = Arc::new(Mutex::new(0));
+    let total_length = config.commands.len();
+    for command in config.commands {
+        let success_count = Arc::clone(&success_count);
+        pool.execute(move || {
+            match run_command(&command) {
+                Ok(res) => {
+                    info!("<- 🟢 {}", res);
+                    println!("<- 🟢 {} Success", command.name);
+                    let mut count = success_count.lock().unwrap();
+                    *count += 1;
+                },
+                Err(error) => {
+                    info!("<- 🔴 [{}] {:?}", command.name, error);
+                    println!("<- 🔴 {} Failed", command.name);
+                }
             }
-            Err(error) => {
-                count_failed = count_failed + 1;
-                error!("{:?}", error);
-            }
-        }
+        })
     }
 
-    info!("Success total {}", count_success);
-    info!("Failed total {}", count_failed);
+    pool.drop();
+
+    let total_success = *success_count.lock().unwrap();
+    let total_failed = total_length - total_success;
+    println!("🏠🟢 Done. Success {}",total_success);
+    println!("🏠🔴 Done. Failed {}",total_failed);
+
+    
 }

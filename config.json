@@ -1,16 +1,28 @@
 {
   "commands": [
     {
-      "name": "bitbucket ssh",
+      "name": "SSH bitbucket",
       "command": "ssh -T git@bitbucket.org"
     },
     {
-      "name": "github ssh",
+      "name": "SSH github",
       "command": "ssh -T git@github.com 2>&1 | grep -q \"successfully\""
     },
     {
-      "name": "gitlab ssh",
+      "name": "SSH gitlab",
       "command": "ssh -T git@gitlab.com"
+    },
+    {
+      "name": "PING Google",
+      "command": "ping -c 3 8.8.8.8"
+    },
+    {
+      "name": "PING Facebook",
+      "command": "ping -c 3 facebook.com"
+    },
+    {
+      "name": "PING X.com",
+      "command": "ping -c 3 x.com"
     }
   ]
 }
