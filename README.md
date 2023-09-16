@@ -2,7 +2,7 @@
 
 *Monitoring Connection*
 
-Make sure your ISP doesn't block your job. Monitor your connection to all common website tirelessly with multi-thread job.
+Monitor your connection to all common website tirelessly with multi-thread job.
 
 ## How To
 
